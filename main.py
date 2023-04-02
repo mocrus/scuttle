@@ -3,10 +3,8 @@ import disnake
 from disnake.ext import commands
 
 
-TOKEN = "MTA5MTQ4NTM3MDY5ODQzNjcyOQ.GsLAN8.P4VBnCRuY6yPbPbHAIWL9HbX-mMNZD0VGrT3Gw"
-TOKEN_scutle = "MTA4MDUzMTY5NzIzMTIxNjc1MA.GFVw2X.h6hRFZaOLxphMRk_fUZqi6MkJ40RjUyEuC4AU4"
-# "MTA5MTQ4NTM3MDY5ODQzNjcyOQ.GsLAN8.P4VBnCRuY6yPbPbHAIWL9HbX-mMNZD0VGrT3Gw" --мурчик
-# "OTk1NzE2NDA1MDQxMjk5NDY3.G5xkWO.oACnKbd4oLZ_UW5eFjB3e_aEUuq31-h5-hUmlM" --mircus app
+TOKEN = ""
+
 bot = commands.Bot(command_prefix="!", intents=disnake.Intents.all())
   
 @bot.command()
