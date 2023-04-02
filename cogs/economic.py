@@ -545,6 +545,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Помуркай любимому котику")
     async def reaction_mur(ctx, member: disnake.Member = None):
+        await ctx.response.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if a['balance']>=10:
             if member is None:
@@ -579,6 +580,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Поцілуй любимого котика")
     async def reaction_kiss(ctx, member: disnake.Member = None):
+        await ctx.response.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if a['balance']>=10:
             if not member:
@@ -614,6 +616,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Погладь свого котика")
     async def reaction_pat(ctx, member: disnake.Member = None):
+        await ctx.response.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if a['balance']>=10:
             if not member:
@@ -648,6 +651,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Обійми сумуючого котика")
     async def reaction_hug(ctx, member: disnake.Member = None):
+        await ctx.response.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if a['balance']>=10:
             if not member:
@@ -682,6 +686,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Уїби котику по рофлянчику")
     async def reaction_punch(ctx, member: disnake.Member = None):
+        await ctx.response.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if a['balance']>=10:
             if not member:
@@ -716,6 +721,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Погудуй голодного котика")
     async def reaction_feed(ctx, member: disnake.Member = None):
+        await ctx.response.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if a['balance']>=10:
             if not member:
@@ -747,6 +753,7 @@ class Economyc(commands.Cog):
 
     @commands.slash_command(description="Ще одна чітерна штука яка зробить адміна ще гарнішим")
     async def buy_banner(self, ctx, url: str):
+        await ctx.respose.defer()
         a = await collection.find_one({"id": ctx.author.id})
         if ctx.author.get_role(1071952131940171868) is None:
             if a['balance'] >= 8000:
