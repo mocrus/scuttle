@@ -1,7 +1,9 @@
+import aiohttp
 import disnake
 import easy_pil
 import random
 from aiogram import Bot
+from io import BytesIO
 from disnake.ext import commands, tasks
 import aioschedule
 from disnake import File
@@ -101,7 +103,7 @@ class Economyc(commands.Cog):
 
     @tasks.loop(seconds=1)
     async def chek_voice(self):
-        guild = self.bot.get_guild(1079853460276662322)
+        guild = self.bot.get_guild(750380875706794116)
         for channel in guild.voice_channels:
             for member in channel.members:
                 if member.voice.self_mute is False and member.get_role(1060370273695699056) is None:
@@ -133,30 +135,36 @@ class Economyc(commands.Cog):
             await collection_shop.update_one({"id": ctx.id, "fon": banner}, {"$inc": {"off" : -1}})
 
 
-    
-    async def week_reset(self):
+    async def week(self):
         a = collection.find(limit=1).sort("week", -1)
+        guild = self.bot.get_guild(750380875706794116)
         memb = await a.to_list(length=100)
-        img = Editor('back.png')
+        for b in memb:
+            mem = guild.get_member(b['id'])
+        ava = await easy_pil.load_image_async(mem.display_avatar.url)
+        ava_edit = Editor(image=ava).resize(size=(150, 150)).rounded_corners(radius=100)
+        img = Editor("cogs/pngs/back.png")
+        if len(mem.name) >= 17:
+            name = str(mem.name[:17]) + "..."
+        else:
+            name = mem.name
+        img.text(position=(377, 226), text=name, font=Font.montserrat(variant="regular", size=25), color='white')
+        img.text(position=(377, 288), text=f"{mem.top_role.name}", font=Font.montserrat(variant="regular", size=25), color='white')
+        img.paste(image=ava_edit, position=(180, 187))
+        img.save(fp='cogs\\pngs\\week.png', format='png')
 
-
-
-
-
-
-
-
+        with open('cogs\pngs\week.png', 'rb') as f:
+            image_data = f.read()
+        with BytesIO(image_data) as image_binary:
+            await guild.edit(banner=image_binary.read())
         await collection.update_many({}, {"$set": {"week": 0}})
-        
-    
-
 
 
     @commands.Cog.listener()
     async def on_ready(self):
         
         for guild in self.bot.guilds:
-            aioschedule.every().saturday.at("15:18").do(self.week_reset, args=self)
+            aioschedule.every().sunday.at("23:59").do(self.week, args=self)
             channel = disnake.utils.get(self.bot.get_all_channels(), id=1082933881033986078)
             for member in guild.members:
                 member : disnake.Member
@@ -188,7 +196,7 @@ class Economyc(commands.Cog):
 
                     self.off_banner.start(ctx=member, role=role, banner=row['fon'])
                 self.chek_voice.start()
-                await self.week_reset()
+
 
 
 
@@ -238,6 +246,9 @@ class Economyc(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message : disnake.Message):
+        if self.bot.user.mentioned_in(message):
+            await message.add_reaction('🌙')
+        await self.bot.process_commands(message)
         if message.author.get_role(1060370273695699056) is None:
             if message.channel.id not in [1066174497398468628, 1076680055780016138, 1071955972983107654, 1087073424054177902, 1072333954067202088]:
                 if len(message.content)>=5:
@@ -532,7 +543,207 @@ class Economyc(commands.Cog):
 
 
 
+    @commands.slash_command(description="Помуркай любимому котику")
+    async def reaction_mur(ctx, member: disnake.Member = None):
+        a = await collection.find_one({"id": ctx.author.id})
+        if a['balance']>=10:
+            if member is None:
+                await ctx.send(f"{ctx.author.mention}, немає кому помуркотіти :c")
 
+            else:
+                mur_gifs = [
+                    "https://media.tenor.com/MpelG44DIYsAAAAM/cats-kitty.gif",
+                    "https://media.tenor.com/n_zdha99hVMAAAAM/kitty.gif",
+                    "https://media.tenor.com/J5dCW4RrePEAAAAM/kitten-lion-king.gif",
+                    "https://media.tenor.com/tikIIf6NJvEAAAAM/cat-sleep.gif",
+                    "https://i.gifer.com/9JG0.gif",
+                    "https://i.gifer.com/8T2s.gif"
+                ]
+
+                random_mur_gifs = random.choice(mur_gifs)
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(random_mur_gifs) as resp:
+                        if resp.status != 200:
+                            return await ctx.send('Не вдалося завантажити зображення...')
+
+                        embed = disnake.Embed(description=f"{ctx.author.mention} помуркав(ла) {member.mention} ❤️")
+                        embed.colour = disnake.Colour.from_rgb(255, 192, 203)
+                        embed.set_footer(text="Ціна реакції 10 рун")
+                        embed.set_image(url=random_mur_gifs)
+                        await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -10}})
+                        await ctx.send(embed=embed)
+        else:
+            await ctx.send("У вас недостатньо коштів шоб когосмусь помуркати")
+
+
+    @commands.slash_command(description="Поцілуй любимого котика")
+    async def reaction_kiss(ctx, member: disnake.Member = None):
+        a = await collection.find_one({"id": ctx.author.id})
+        if a['balance']>=10:
+            if not member:
+                await ctx.send(f"{ctx.author.mention}, немає кому поцілувати :c")
+            else:
+                kiss_gifs = [
+                    "https://media.tenor.com/217aKgnf16sAAAAM/kiss.gif",
+                    "https://media.tenor.com/IM4-RWRjSNgAAAAM/kiss.gif",
+                    "https://media.tenor.com/QjMZ6Dx33_QAAAAM/kuss-kussi.gif",
+                    "https://media.tenor.com/wPzIJLI3IeQAAAAM/kiss-hot.gif",
+                    "https://media.tenor.com/U7h-gyy--akAAAAM/kiss.gif",
+                    "https://media.giphy.com/media/bm2O3nXTcKJeU/giphy.gif",
+                    "https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif"
+                ]
+
+                random_kiss_gifs = random.choice(kiss_gifs)
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(random_kiss_gifs) as resp:
+                        if resp.status != 200:
+                            return await ctx.send('Не вдалося завантажити зображення...')
+
+                        embed = disnake.Embed(description=f"{ctx.author.mention} поцілував(ла) {member.mention} ❤️")
+                        embed.colour = disnake.Colour.from_rgb(255, 192, 203)
+                        embed.set_footer(text="Ціна реакції 10 рун")
+                        embed.set_image(url=random_kiss_gifs)
+                        await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -10}})
+                        await ctx.send(embed=embed)
+
+        else:
+            await ctx.send("У вас недостатньо коштів шоб когось поцілувати")
+
+
+    @commands.slash_command(description="Погладь свого котика")
+    async def reaction_pat(ctx, member: disnake.Member = None):
+        a = await collection.find_one({"id": ctx.author.id})
+        if a['balance']>=10:
+            if not member:
+                await ctx.send(f"{ctx.author.mention}, немає кому гладити :c")
+                
+            else:
+                pat_gifs = [
+                    "https://media.tenor.com/qjHkX9X0FOQAAAAS/milk-and-mocha-pat.gif",
+                    "https://media.tenor.com/oGbO8vW_eqgAAAAM/spy-x-family-anya.gif",
+                    "https://media.tenor.com/Dbg-7wAaiJwAAAAM/aharen-aharen-san.gif",
+                    "https://media.tenor.com/aZFqg65KvssAAAAM/pat-anime.gif",
+                    "https://media.tenor.com/JsjHFFy5O40AAAAM/kitten-pat.giff"
+                ]
+
+                random_pat_gifs = random.choice(pat_gifs)
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(random_pat_gifs) as resp:
+                        if resp.status != 200:
+                            return await ctx.send('Не вдалося завантажити зображення...')
+
+                        # кастомізація embed
+                        embed = disnake.Embed(description=f"{ctx.author.mention} погладив(ла) {member.mention} ❤️")
+                        embed.colour = disnake.Colour.from_rgb(255, 192, 203)  # код кольору рожевої полоски
+                        embed.set_footer(text="Ціна реакції 10 рун")
+                        embed.set_image(url=random_pat_gifs)
+                        await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -10}})
+                        await ctx.send(embed=embed)
+
+        else:
+            await ctx.send("У вас недостатньо коштів шоб когось погладити")
+
+    @commands.slash_command(description="Обійми сумуючого котика")
+    async def reaction_hug(ctx, member: disnake.Member = None):
+        a = await collection.find_one({"id": ctx.author.id})
+        if a['balance']>=10:
+            if not member:
+                await ctx.send(f"{ctx.author.mention}, немає кому обійняти :c")
+                
+            else:
+                hug_gifs = [
+                    "https://media.tenor.com/NGFif4dxa-EAAAAj/hug-hugs.gif",
+                    "https://media.tenor.com/S4he5WCX9lEAAAAM/hugs-cuddle.gif",
+                    "https://media.tenor.com/-evl3vUtVhEAAAAM/hugs-cuddle.gif",
+                    "https://media.tenor.com/J7eGDvGeP9IAAAAM/enage-kiss-anime-hug.gif",
+                    "https://media.tenor.com/3mr1aHrTXSsAAAAM/hug-anime.gif"
+                ]
+
+                random_hug_gifs = random.choice(hug_gifs)
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(random_hug_gifs) as resp:
+                        if resp.status != 200:
+                            return await ctx.send('Не вдалося завантажити зображення...')
+
+
+                        embed = disnake.Embed(description=f"{ctx.author.mention} обійняв(ла) {member.mention} ❤️")
+                        embed.colour = disnake.Colour.from_rgb(255, 192, 203)
+                        embed.set_footer(text="Ціна реакції 10 рун")
+                        embed.set_image(url=random_hug_gifs)
+                        await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -10}})
+                        await ctx.send(embed=embed)
+        else:
+            await ctx.send("У вас недостатньо коштів шоб когось обійняти")
+
+
+    @commands.slash_command(description="Уїби котику по рофлянчику")
+    async def reaction_punch(ctx, member: disnake.Member = None):
+        a = await collection.find_one({"id": ctx.author.id})
+        if a['balance']>=10:
+            if not member:
+                await ctx.send(f"{ctx.author.mention}, немає кому вдарити :c")
+                return
+
+            punch_gifs = [
+                "https://media.tenor.com/qDDsivB4UEkAAAAM/anime-fight.gif",
+                "https://media.tenor.com/p_mMicg1pgUAAAAM/anya-forger-damian-spy-x-family.gif",
+                "https://media.tenor.com/gmvdv-e1EhcAAAAM/weliton-amogos.gif",
+                "https://media.tenor.com/nWTDZU5WQ4oAAAAM/anime-punching.gif",
+                "https://media.tenor.com/aEX1wE-WrEMAAAAM/anime-right-in-the-stomach.gif"
+            ]
+
+            random_punch_gifs = random.choice(punch_gifs)
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(random_punch_gifs) as resp:
+                    if resp.status != 200:
+                        return await ctx.send('Не вдалося завантажити зображення...')
+
+                    # кастомізація embed
+                    embed = disnake.Embed(description=f"{ctx.author.mention} уїбашив(ла) {member.mention} ❤️")
+                    embed.colour = disnake.Colour.from_rgb(255, 192, 203)  # код кольору рожевої полоски
+                    embed.set_footer(text="Ціна реакції 10 рун")
+                    embed.set_image(url=random_punch_gifs)
+                    await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -10}})
+                    await ctx.send(embed=embed)
+        else:
+            await ctx.send("У вас недостатньо коштів шоб когось вдарити")
+
+
+    @commands.slash_command(description="Погудуй голодного котика")
+    async def reaction_feed(ctx, member: disnake.Member = None):
+        a = await collection.find_one({"id": ctx.author.id})
+        if a['balance']>=10:
+            if not member:
+                await ctx.send(f"{ctx.author.mention}, немає кого погодувати :c")
+            else:
+                feed_gifs = [
+                    "https://i.gifer.com/7pDW.gif",
+                    "https://i.gifer.com/P2ka.gif",
+                    "https://media.tenor.com/Aflxvrwa0woAAAAM/kawaii-wholesome.gif",
+                    "https://media.tenor.com/qi8MqDKmpl8AAAAM/lycoris-recoil-chisato.giff",
+                    "https://media.tenor.com/Kpw8-sodxCcAAAAM/feed.gif"
+                ]
+
+                random_feed_gifs = random.choice(feed_gifs)
+
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(random_feed_gifs) as resp:
+                        if resp.status != 200:
+                            return await ctx.send('Не вдалося завантажити зображення...')
+
+                        embed = disnake.Embed(description=f"{ctx.author.mention} покормив(ла) {member.mention} ❤️")
+                        embed.colour = disnake.Colour.from_rgb(255, 192, 203)
+                        embed.set_footer(text="Ціна реакції 10 рун")
+                        embed.set_image(url=random_feed_gifs)
+                        await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -10}})
+                        await ctx.send(embed=embed)
+        else:
+            await ctx.send("У вас недостатньо коштів шоб когось погодувати")
 
     @commands.slash_command(description="Ще одна чітерна штука яка зробить адміна ще гарнішим")
     async def buy_banner(self, ctx, url: str):

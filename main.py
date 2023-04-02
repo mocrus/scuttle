@@ -1,10 +1,12 @@
-import os
+import os   
 import disnake
 from disnake.ext import commands
-    
 
-TOKEN = "OTk1NzE2NDA1MDQxMjk5NDY3.G5xkWO.oACnKbd4oLZ_UW5eFjB3e_aEUuq31-h5-hUmlM"
 
+TOKEN = "MTA5MTQ4NTM3MDY5ODQzNjcyOQ.GsLAN8.P4VBnCRuY6yPbPbHAIWL9HbX-mMNZD0VGrT3Gw"
+TOKEN_scutle = "MTA4MDUzMTY5NzIzMTIxNjc1MA.GFVw2X.h6hRFZaOLxphMRk_fUZqi6MkJ40RjUyEuC4AU4"
+# "MTA5MTQ4NTM3MDY5ODQzNjcyOQ.GsLAN8.P4VBnCRuY6yPbPbHAIWL9HbX-mMNZD0VGrT3Gw" --мурчик
+# "OTk1NzE2NDA1MDQxMjk5NDY3.G5xkWO.oACnKbd4oLZ_UW5eFjB3e_aEUuq31-h5-hUmlM" --mircus app
 bot = commands.Bot(command_prefix="!", intents=disnake.Intents.all())
   
 @bot.command()
@@ -24,11 +26,6 @@ async def activity(ctx, playing=None, listening=None, watching=None):
         await bot.change_presence(activity=disnake.Activity(name=str(listening), type=disnake.ActivityType.listening))
     await ctx.send("Активіті встановлено")
 
-@bot.slash_command(description="Муркнути комусь на вушко")
-async def mur(ctx, member: disnake.Member = None):
-    if not member:
-        member = ctx.author
-    await ctx.send(f"{ctx.author.mention} помуркав на вушко ❤️, {member.mention}!", delete_after=30.0)
 
 @bot.command()  
 @commands.is_owner()
