@@ -3,18 +3,12 @@ import disnake
 import easy_pil
 import random
 import datetime
-from aiogram import Bot
 from io import BytesIO
 from contextlib import suppress
 from disnake.ext import commands, tasks
 from disnake import File
 from motor.motor_tornado import MotorClient
 from easy_pil import Editor, load_image_async, Font
-
-
-bot = Bot(token="6293959670:AAG8hBUsf4zECPXHQD__vo-8LZ8SZBEP1Cw")
-
-
 
 
 cluster = MotorClient("mongodb+srv://mircus:0x14lzl04t39igh@botcluster.omo2cfl.mongodb.net/?retryWrites=true&w=majority")
@@ -91,7 +85,7 @@ class Economyc(commands.Cog):
             1085709602043203594, 1085712151970328697, 1085713357253910599,
             1077218489523240993, 1085714937546014740, 1085718665741209650,
             1085719022391263313, 1085668121462984754]
-    @tasks.loop(seconds=1)
+    @tasks.loop(hours=1)
     async def banner_off(self):
         banners = collection_shop.find({})
         my_data = await banners.to_list(length=100)
@@ -104,7 +98,6 @@ class Economyc(commands.Cog):
                 await collection.update_one({"id": member}, {"$set": {"fon": None}})
 
 
-
     @tasks.loop(seconds=60)
     async def add_voice_act(self):
         guild = self.bot.get_guild(750380875706794116)
@@ -114,7 +107,6 @@ class Economyc(commands.Cog):
             a = await collection.find_one({"id": member})
             if a['xp']-a['last']>= a['next']:
                 await collection.update_many({"id": member}, {"$inc": { "lvl": +1, "next": +150, "last": a['next'] }})
-        await memb.send(f"{self.members_to_be_charged} додано палюту")
 
     @commands.command()
     @commands.has_any_role(1081231864389447732)
