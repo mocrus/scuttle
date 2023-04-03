@@ -129,8 +129,9 @@ class ModerationCommand(commands.Cog):
         await channel.send(embed=embd)
 
     @commands.Cog.listener()
-    async def on_member_remove(self, guild, user):
-        channel = disnake.utils.get(guild.channels, id=1076737017448255519)
+    async def on_member_remove(self, user):
+        guild = self.bot.get_guild(750380875706794116)
+        channel = guild.get_channel(1076737017448255519)
         embd = disnake.Embed(
             title=(str(user.name)+"#"+str(user.discriminator)),
             description=f"{user.mention} покинув сервер",
