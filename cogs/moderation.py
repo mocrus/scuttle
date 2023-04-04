@@ -145,7 +145,7 @@ class ModerationCommand(commands.Cog):
             channel = disnake.utils.get(message.guild.channels, id=1076737017448255519)
             embd = disnake.Embed(
                 title=(str(message.author.name)+"#"+str(message.author.discriminator)),
-                description=f"Було видалено повідомлення від {message.author.mention} в каналі {message.channel.name    }",
+                description=f"Було видалено повідомлення від {message.author.mention} в каналі {message.channel.name}",
                 color=disnake.Colour.yellow(),
                 timestamp=datetime.datetime.now()
             )
@@ -162,6 +162,13 @@ class ModerationCommand(commands.Cog):
             color=disnake.Colour.yellow()
         )
         await channel.send(embed=embd)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        guild = self.bot.get_guild(750380875706794116)
+        role = disnake.utils.get(guild.roles, id=1071967354214420601)
+        await member.add_roles(role)
+
 
     @commands.slash_command(description="Скоро мусорка")
     @commands.has_any_role(1079801089962016849)

@@ -16,11 +16,14 @@ db = cluster['botdb']
 collection = db['users']
 collection_shop = db['shop']
 
+
+
 class Paginator(disnake.ui.View):
-    def __init__(self, embeds: list, author_id: int = None):
+    def __init__(self, embeds: list, author_id: int = None, member: disnake.Member = None):
         super().__init__()
         self.embeds = embeds
         self.author = author_id
+        self.member = member
         self.costs = [0, 2500, 2500, 2500, 3500, 3500, 3500, 4500, 4500, 5500, 5500, 6500, 6500]
         self.roles = [0, 1085671197229994014, 1085673412061573240, 1085707689608351814, 1085679795481878710, 
                     1085709602043203594, 1085712151970328697, 1085713357253910599,
@@ -46,25 +49,27 @@ class Paginator(disnake.ui.View):
     @disnake.ui.button(label="Придбати", style=disnake.ButtonStyle.success)
     async def buy(self, button: disnake.ui.Button, ctx: disnake.Interaction):
         a = await collection.find_one({"id": ctx.author.id})
-        b = await collection_shop.find_one({"id": ctx.author.id, "fon": self.curent_costs})
         role = disnake.utils.get(ctx.guild.roles, id=self.roles[self.curent_costs])
-        if ctx.author.id != self.author:
+        if a["balance"] < self.costs[self.curent_costs]:
+            return await ctx.send("У вас недостатньо коштів", ephemeral=True)
+        elif ctx.author.id != self.author:
             return await ctx.send("Не лізь сожрьот 🐻", ephemeral=True)
+        elif self.costs[self.curent_costs] == 0:
+            return await ctx.send("Цей банер не можна купити", ephemeral=True)
         else:
-            if a["balance"] < self.costs[self.curent_costs]:
-                return await ctx.send("У вас недостатньо коштів", ephemeral=True)
-            elif a["fon"]== self.fon[self.curent_costs]:
-                await ctx.send("Ви вже використовуєте цей банер", ephemeral=True)
-            elif self.costs[self.curent_costs] == 0:
-                return await ctx.send("Цей банер не можна купити", ephemeral=True)
-            elif b is not None:
-                return await ctx.send("Ви вже купили цей банер, загляніть в інвентар", ephemeral=True)
+            if self.member.id is None:
+                b = await collection_shop.find_one({"id": ctx.author.id, "fon": self.curent_costs})
+                memb = ctx.author
             else:
-                await collection_shop.insert_one({"id": ctx.author.id, "fon": self.curent_costs, "off": (datetime.datetime.now()+datetime.timedelta(days=7))})
-                await collection.update_one({"id": ctx.author.id}, {"$inc": {"balance": -self.costs[self.curent_costs]}})
-                await collection.update_one({"id": ctx.author.id}, {"$set": {"fon": self.fon[self.curent_costs]}})
-                await ctx.author.add_roles(role)                   
-                return await ctx.send(f"Ви успішно купили банер", ephemeral=True)
+                b = await collection_shop.find_one({"id": self.member.id, "fon": self.curent_costs})
+                memb = self.member
+            if b is not None:
+                return await ctx.send("Ви вже купили цей банер, загляніть в інвентар", ephemeral=True)
+            await collection_shop.insert_one({"id": memb.id, "fon": self.curent_costs, "off": (datetime.datetime.now()+datetime.timedelta(days=7))})
+            await collection.update_one({"id": memb.id}, {"$inc": {"balance": -self.costs[self.curent_costs]}})
+            await collection.update_one({"id": ctx.author.id}, {"$set": {"fon": self.fon[self.curent_costs]}})
+            await memb.add_roles(role)                   
+            return await ctx.send(f"Ви успішно купили банер", ephemeral=True)
 
     @disnake.ui.button(label="➡️", style=disnake.ButtonStyle.primary)
     async def upper(self, button: disnake.ui.Button, ctx: disnake.Interaction):
@@ -101,13 +106,32 @@ class Economyc(commands.Cog):
     @tasks.loop(seconds=60)
     async def add_voice_act(self):
         guild = self.bot.get_guild(750380875706794116)
-        memb = guild.get_member(625243872905396228)
         for member in self.members_to_be_charged:
             await collection.update_many({"id": member}, {"$inc": { "xp": +1, "vxp": +1, "balance": +1 }})
             a = await collection.find_one({"id": member})
             if a['xp']-a['last']>= a['next']:
                 await collection.update_many({"id": member}, {"$inc": { "lvl": +1, "next": +150, "last": a['next'] }})
-
+                user = guild.get_member(member)
+                if a['lvl']+1 == 30:
+                    role_add, role_rmv = disnake.utils.get(guild.roles, id=1090415612045574224), disnake.utils.get(guild.roles, id=1071967354214420601)
+                    await collection.update_one({"id": member}, {"$inc": {"balance": +500}})
+                    await user.add_roles(role_add)
+                    await user.remove_roles(role_rmv)
+                elif a['lvl']+1 == 60:
+                    role_add, role_rmv = disnake.utils.get(guild.roles, id=1090415980922019960), disnake.utils.get(guild.roles, id=1090415612045574224)
+                    await collection.update_one({"id": member}, {"$inc": {"balance": +100}})
+                    await user.add_roles(role_add)
+                    await user.remove_roles(role_rmv)
+                elif a['lvl']+1 == 90:
+                    role_add, role_rmv = disnake.utils.get(guild.roles, id=1090416208836300941), disnake.utils.get(guild.roles, id=1090415980922019960)
+                    await collection.update_one({"id": member}, {"$inc": {"balance": +1500}})
+                    await user.add_roles(role_add)
+                    await user.remove_roles(role_rmv)
+                elif a['lvl']+1 == 120:
+                    role_add, role_rmv = disnake.utils.get(guild.roles, id=1090417882388758669), disnake.utils.get(guild.roles, id=1090416208836300941)
+                    await collection.update_one({"id": member}, {"$inc": {"balance": +2000}})
+                    await user.add_roles(role_add)
+                    await user.remove_roles(role_rmv)
     @commands.command()
     @commands.has_any_role(1081231864389447732)
     async def check_db(self, ctx):
@@ -237,9 +261,29 @@ class Economyc(commands.Cog):
                             a = await collection.find_one({"id": message.author.id})
                             if a['xp']-a['last'] >= a['next']:
                                 await collection.update_many({"id": message.author.id}, {"$inc": { "lvl": +1, "next": +150, "last": a['next'] }})
-
+                                if a['lvl']+1 == 30:
+                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090415612045574224), disnake.utils.get(message.guild.roles, id=1071967354214420601)
+                                    await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +500}})
+                                    await message.author.add_roles(role_add)
+                                    await message.author.remove_roles(role_rmv)
+                                elif a['lvl']+1 == 60:
+                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090415980922019960), disnake.utils.get(message.guild.roles, id=1090415612045574224)
+                                    await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +1000}})
+                                    await message.author.add_roles(role_add)
+                                    await message.author.remove_roles(role_rmv)
+                                elif a['lvl']+1 == 90:
+                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090416208836300941), disnake.utils.get(message.guild.roles, id=1090415980922019960)
+                                    await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +1500}})
+                                    await message.author.add_roles(role_add)
+                                    await message.author.remove_roles(role_rmv)
+                                elif a['lvl']+1 == 120:
+                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090417882388758669), disnake.utils.get(message.guild.roles, id=1090416208836300941)
+                                    await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +2000}})
+                                    await message.author.add_roles(role_add)
+                                    await message.author.remove_roles(role_rmv)
     @commands.slash_command(description="Покаже ваш інвентар профілів")
     async def invetar(self, ctx, member: disnake.Member=None):
+        options = []
         if member is None:
             rows = collection_shop.find({"id": ctx.author.id})
         else:
@@ -259,7 +303,15 @@ class Economyc(commands.Cog):
                     value= f"Діє до {row['off']}",
                     inline = False
                 )
-            await ctx.send(embed=embed_invent)
+                options.append(disnake.SelectOption(label=f"{fons[row['fon']]}", value=self.roles[row['fon']]))
+
+            menu = disnake.ui.Select(custom_id="inventar", placeholder="Оберіть банер",max_values=1, min_values=1, options=options)
+
+
+
+
+
+            await ctx.send(embed=embed_invent, view=menu)
         else:
             await ctx.send("Ваш інвентар пустий. Купіть щось в магазині")
 
@@ -798,6 +850,98 @@ class Economyc(commands.Cog):
             return
 
         self.members_to_be_charged.add(member.id)
+
+    @commands.slash_command()
+    async def present(self, ctx, member: disnake.Member=None):
+        if member is None:
+            await ctx.send("Вкажіть кому ви хочете подарувати")
+        elif member.id == ctx.author.id:
+            await ctx.send("Ви не можете подарувати подарунок собі")
+        else:
+            emj1 = disnake.utils.get(ctx.guild.emojis, id=1085693327065747517)
+            emj2 = disnake.utils.get(ctx.guild.emojis, id=1076689168098414682)
+            embed_start = disnake.Embed(
+                title="Вітаю в магазині!",
+                description=f"Тут ви зможете купувати банери для свого профілю.\nБанер діє 7 днів",
+                color=disnake.Colour.yellow())
+            embed_start.set_image(url="https://imgur.com/lxoACBR.png")
+            embed_start.add_field(name="Валюту можна получати такими методами:", value="> Спілкуватись в чаті\n > Спілкуватись у войсі")
+            embed_start.add_field(name=f"Щоб дізнатись свій баланас, пропишіть команду /profile\nТакож можна отримати щоденну валюту, прописавши /daily", value=f"\n", inline=False)
+            member = await collection.find_one({"id": ctx.author.id})
+
+
+
+            embed_1 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 1. Полуничка та роль до нього\n{emj2} Ціна: 2,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/lxoACBR.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_2 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 2. Нічне небо та роль до нього\n{emj2} Ціна: 2,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/bbobocT.png").set_footer(text=f"Ваш баланс {member['balance']}") 
+            embed_3 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 3. Рожеві медузки та роль до нього\n{emj2} Ціна: 2,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/Q9Vi03N.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_4 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 4. 80's та роль до нього\n{emj2} Ціна: 3,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/ML0dDtu.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_5 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 5. Ретро вайб та роль до нього\n{emj2} Ціна: 3,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/UDubCJM.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_6 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 6. Спокій та роль до нього\n{emj2} Ціна: 3,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/ebjeBPa.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_7 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 7. Кролики та роль до нього\n{emj2} Ціна: 4,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/TnLpUF3.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_8 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 8. Дед інсульт та роль до нього\n{emj2} Ціна: 4,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/dMVW5gb.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_9 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 9. Квіткове поле та роль до нього\n{emj2} Ціна: 5,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/zgu2f6c.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_10 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 10. Малий мандрівник та роль до нього\n{emj2} Ціна: 5,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/RoySOmW.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_11 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 11. Вишукане мистецтво та роль до нього\n{emj2} Ціна: 6,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/QM8ONan.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_12 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 12. Кицюк та роль до нього\n{emj2} Ціна: 6,500 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://imgur.com/hZUyD5R.png").set_footer(text=f"Ваш баланс {member['balance']}")
+            embed_13 = disnake.Embed(
+                        title="Вітаю в магазині!",
+                        description=f"{emj2} 13. Кастомний банер\n{emj2} Ціна: 8,000 рун {emj1}",
+                        color=disnake.Colour.yellow()).set_image(url="https://s3.amazonaws.com/criterion-production/editorial_content_posts/hero/7272-/Brxs411JK46J7qbllI1W8kHqMU5TyZ_original.jpg").set_footer(text=f"Ваш баланс {member['balance']}")
+
+            embeds = [
+                embed_start,
+                embed_1,
+                embed_2,
+                embed_3,
+                embed_4,
+                embed_5,
+                embed_6,
+                embed_7,
+                embed_8,
+                embed_9,
+                embed_10,
+                embed_11,
+                embed_12,
+                embed_13
+            ]
+            await ctx.send(embed=embeds[0], view=Paginator(embeds=embeds, author_id=ctx.author.id, member=member))
+
 
 
 

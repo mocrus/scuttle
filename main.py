@@ -1,9 +1,11 @@
 import os   
 import disnake
+import datetime
 from disnake.ext import commands
 
 
-TOKEN = ""
+TOKEN = "OTk1NzE2NDA1MDQxMjk5NDY3.G6v9IG.YIY9zw-N9GOEe0HznE0gajOKEX3uJWz2ZrjHjU"
+TOKEN1 = "MTA4MDUzMTY5NzIzMTIxNjc1MA.G0-alE.UUXBL7VvWDo4biX9lNnM6kQW9i5v5TllOsO1iQ"
 
 bot = commands.Bot(command_prefix="!", intents=disnake.Intents.all())
   
