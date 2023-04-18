@@ -17,6 +17,7 @@ class DivorceAssept(disnake.ui.View):
             title=f"{self.author.name} та {self.member} розвелись",
             description=f"ПЛАЧЕМО ВСІЄЮ ПОЛТАВСЬКОЮ ОБЛАСТЮ, КРІМ КРЕМЕНЧУГА"
         )
+        await collection_marrys.delete_one({"$or": [{"id1": ctx.author.id}, {"id2": ctx.author.id}]})
         await self.author.remove_roles(role)
         await self.member.remove_roles(role)
         await ctx.send(embed=embed, delete_after=60)
@@ -30,6 +31,7 @@ class DivorceAssept(disnake.ui.View):
             description="Ми раді що ви вирішили свої питання без розлучення"
         )
         await ctx.send(embed=emed, delete_after=60)
+        
 class DivorceCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
@@ -40,9 +42,10 @@ class DivorceCog(commands.Cog):
         if get_marriage is None:
             return await ctx.send("Ви не в відносинах")
         embed = disnake.Embed(
-            title=f"{ctx.author.name} подав на розлучення",
-            description="У вас є `1 хвилина` щоб погодитисб або відмовитись"
-        )
+            title=f"У вас є `1 хвилина` щоб прийняти чи відхилити пропозицію!",
+            description=f"{ctx.author.mention} зробив пропозицію {member.mention} 💙",
+            colour = disnake.Colour.from_rgb(255, 192, 203))  # код кольору рожевої полоски
+        
         if get_marriage['id1']==ctx.author.id:
             member = disnake.utils.get(ctx.guild.members, id=get_marriage['id2'])
         else:

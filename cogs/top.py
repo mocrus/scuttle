@@ -98,6 +98,29 @@ class Tops(commands.Cog):
 
         await ctx.send(embed=embed_top)
 
+    @commands.slash_command(description="Топ найактивніших няшок взагалі", )
+    async def top_week(self, ctx):
+
+        embed_top = disnake.Embed(
+        title="Top Week",
+        )
+        rows = collection.find(limit=10).sort("week", -1) 
+        my_data =  await rows.to_list(length=100)
+        count = 0
+        for row in my_data:
+            nam = disnake.utils.get(ctx.guild.members, id=int(row['id']))
+            if nam == None: 
+                continue
+            balance = row["week"] 
+            embed_top.add_field(
+                name=f"# {count+1}. | {nam}",
+                value= f"`{round(balance, 2)} повідомлень в чаті ✏️`",
+                inline = False
+            )
+            count += 1
+
+        await ctx.send(embed=embed_top)
+
 
 
 def setup(bot):

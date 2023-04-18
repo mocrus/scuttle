@@ -25,40 +25,41 @@ class Economyc(commands.Cog):
                 guild = self.bot.get_guild(750380875706794116)
                 memb = guild.get_member(member['id'])
                 role = disnake.utils.get(guild.roles, id=self.roles[member['fon']])
+                await collection_shop.delete_one({"id": memb.id, "fon": member["fon"]})
                 await memb.remove_roles(role)
                 await collection.update_one({"id": member}, {"$set": {"fon": None}})
 
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=1)
     async def add_voice_act(self):
         guild = self.bot.get_guild(750380875706794116)
         async with self.lock:
             for member in self.members_to_be_charged:
                 user = guild.get_member(member)
-                await collection.update_many({"id": member}, {"$inc": { "xp": +1, "vxp": +1, "balance": +1 }})
+                await collection.update_one({"id": member}, {"$inc": { "xp": +1, "vxp": +1, "balance": +1 }})
                 a = await collection.find_one({"id": member})
                 if a['xp']-a['last']>= a['next']:
-                    await collection.update_many({"id": member}, {"$inc": { "lvl": +1, "next": +150, "last": a['next'] }})
+                    await collection.update_one({"id": member}, {"$inc": { "lvl": +1, "next": +150, "last": a['next'] }})
                     if a['lvl']+1 == 30:
-                        role_add, role_rmv = disnake.utils.get(guild.roles, id=1090415612045574224), disnake.utils.get(guild.roles, id=1071967354214420601)
+                        role_add = disnake.utils.get(guild.roles, id=1090415612045574224)
                         await collection.update_one({"id": member}, {"$inc": {"balance": +500}})
                         await user.add_roles(role_add)
-                        await user.remove_roles(role_rmv)
+                        
                     elif a['lvl']+1 == 60:
-                        role_add, role_rmv = disnake.utils.get(guild.roles, id=1090415980922019960), disnake.utils.get(guild.roles, id=1090415612045574224)
+                        role_add = disnake.utils.get(guild.roles, id=1090415980922019960) 
                         await collection.update_one({"id": member}, {"$inc": {"balance": +100}})
                         await user.add_roles(role_add)
-                        await user.remove_roles(role_rmv)
+                        
                     elif a['lvl']+1 == 90:
-                        role_add, role_rmv = disnake.utils.get(guild.roles, id=1090416208836300941), disnake.utils.get(guild.roles, id=1090415980922019960)
+                        role_add = disnake.utils.get(guild.roles, id=1090416208836300941)
                         await collection.update_one({"id": member}, {"$inc": {"balance": +1500}})
                         await user.add_roles(role_add)
-                        await user.remove_roles(role_rmv)
+
                     elif a['lvl']+1 == 120:
-                        role_add, role_rmv = disnake.utils.get(guild.roles, id=1090417882388758669), disnake.utils.get(guild.roles, id=1090416208836300941)
+                        role_add = disnake.utils.get(guild.roles, id=1090417882388758669)
                         await collection.update_one({"id": member}, {"$inc": {"balance": +2000}})
                         await user.add_roles(role_add)
-                        await user.remove_roles(role_rmv)
+                        
     @commands.command()
     @commands.has_any_role(1081231864389447732)
     async def check_db(self, ctx):
@@ -96,7 +97,7 @@ class Economyc(commands.Cog):
         if a is None and b is None:
             await collection.insert_one({
                     'id': member.id,
-                    'balance': 0.0,
+                    'balance': 0,
                     'lvl': 0,
                     'cxp': 0,
                     'vxp': 0,
@@ -156,25 +157,25 @@ class Economyc(commands.Cog):
                             if a['xp']-a['last'] >= a['next']:
                                 await collection.update_many({"id": message.author.id}, {"$inc": { "lvl": +1, "next": +150, "last": a['next'] }})
                                 if a['lvl']+1 == 30:
-                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090415612045574224), disnake.utils.get(message.guild.roles, id=1071967354214420601)
+                                    role_add = disnake.utils.get(message.guild.roles, id=1090415612045574224), disnake.utils.get(message.guild.roles, id=1071967354214420601)
                                     await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +500}})
                                     await message.author.add_roles(role_add)
-                                    await message.author.remove_roles(role_rmv)
+                                    
                                 elif a['lvl']+1 == 60:
-                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090415980922019960), disnake.utils.get(message.guild.roles, id=1090415612045574224)
+                                    role_add = disnake.utils.get(message.guild.roles, id=1090415980922019960), disnake.utils.get(message.guild.roles, id=1090415612045574224)
                                     await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +1000}})
                                     await message.author.add_roles(role_add)
-                                    await message.author.remove_roles(role_rmv)
+                                    
                                 elif a['lvl']+1 == 90:
-                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090416208836300941), disnake.utils.get(message.guild.roles, id=1090415980922019960)
+                                    role_add = disnake.utils.get(message.guild.roles, id=1090416208836300941), disnake.utils.get(message.guild.roles, id=1090415980922019960)
                                     await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +1500}})
                                     await message.author.add_roles(role_add)
-                                    await message.author.remove_roles(role_rmv)
+                                    
                                 elif a['lvl']+1 == 120:
-                                    role_add, role_rmv = disnake.utils.get(message.guild.roles, id=1090417882388758669), disnake.utils.get(message.guild.roles, id=1090416208836300941)
+                                    role_add = disnake.utils.get(message.guild.roles, id=1090417882388758669), disnake.utils.get(message.guild.roles, id=1090416208836300941)
                                     await collection.update_one({"id": message.author.id}, {"$inc": {"balance": +2000}})
                                     await message.author.add_roles(role_add)
-                                    await message.author.remove_roles(role_rmv)
+                                    
 
 
 

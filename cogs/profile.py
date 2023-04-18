@@ -1,8 +1,9 @@
+import datetime
 import disnake
 import easy_pil
 from io import BytesIO
 from disnake.ext import commands
-from cogs.db import collection, collection_shop
+from cogs.db import collection, collection_shop, collection_marrys
 from disnake import File
 
 from easy_pil import Editor, load_image_async, Font
@@ -148,12 +149,15 @@ class ProfileAndBanner(commands.Cog):
     @commands.slash_command()
     @commands.has_any_role(1071255622424731738, 1081231864389447732)
     async def week(self, ctx):
-        a = collection.find(limit=1).sort("week", -1)
+        rows = collection.find(limit=10).sort("week", -1)
+        my_data =  await rows.to_list(length=100)
+        for row in my_data:
+            if row["id"] !=192188318555832321:
+                a=row['id']
+                break
         guild = self.bot.get_guild(750380875706794116)
+        mem = guild.get_member(a)
 
-        memb = await a.to_list(length=100)
-        for b in memb:
-            mem = guild.get_member(b['id'])
         ava = await easy_pil.load_image_async(mem.display_avatar.url)
         ava_edit = Editor(image=ava).resize(size=(150, 150)).rounded_corners(radius=100)
         img = Editor("cogs/pngs/back.png")
@@ -172,6 +176,39 @@ class ProfileAndBanner(commands.Cog):
             await guild.edit(banner=image_binary.read())
         await collection.update_many({}, {"$set": {"week": 0}})
 
+    @commands.slash_command()
+    async def love_profile(self, ctx):
+        if ctx.author.get_role(1077027040181633076) is None:
+            return await ctx.send("Ви не одружені")
+        marrys = await collection_marrys.find_one({"$or": [{"id1": ctx.author.id}, {"id2": ctx.author.id}]})
+        edit = Editor("cogs/pngs/love.png")
+        font = Font.montserrat(size=25)
+        memb1 = disnake.utils.get(ctx.guild.members, id=marrys["id1"])
+        memb2 =  disnake.utils.get(ctx.guild.members, id=marrys["id2"])
+        ava1, ava2 = await easy_pil.load_image_async(memb1.display_avatar.url), await easy_pil.load_image_async(memb2.display_avatar.url)
+        ava1, ava2 = Editor(ava1).circle_image().resize((150, 150)), Editor(ava2).circle_image().resize((150, 150))
+        edit.paste(ava1, position=(150, 170))
+        edit.paste(ava2, position=(600, 170))
+        date = datetime.datetime.now()-marrys["date"]
+        dat = str(date).split(" ")
+        if "day" in str(date):
+            time = dat[2].split(":")
+        else:
+            time = dat[0].split(":")
+        edit.text(position=(380, 303), text=f"{date.days}д. {time[0]}г. {time[1]}хв.", font=font, color="white")
+        if len(memb1.name) >= 17:
+            name1 = str(memb1.name[:17]) + "..."
+        else:
+            name1 = " " * (17 - len(memb1.name)) + memb1.name
+        if len(memb2.name) >= 17:
+            name2 = str(memb2.name[:17]) + "..."
+        else:
+            name2 = " " * (17 - len(memb2.name)) + memb2.name
 
+        edit.text(position=(95, 380), text=f"{name1}", font=font, color="white")
+        edit.text(position=(545, 380), text=f"{name2}", font=font, color="white")
+        file = File(fp=edit.image_bytes, filename="profile.png")
+        
+        await ctx.send(file=file)
 def setup(bot):
     bot.add_cog(ProfileAndBanner(bot))

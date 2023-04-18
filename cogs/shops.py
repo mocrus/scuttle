@@ -169,10 +169,10 @@ class ShopsCog(commands.Cog):
     @commands.slash_command()
     async def present(self, ctx, getter: disnake.Member=None, banner_num: int = None):
         role = disnake.utils.get(ctx.guild.roles, id=self.roles[banner_num])
-        get_balance = await collection.find_one({"id": ctx.author.id})['balance']
+        get_balance = await collection.find_one({"id": ctx.author.id})
         if getter is None:
             return await ctx.send("Вкажіть кому ви хочете подарувати")
-        elif get_balance < self.cost[banner_num]:
+        elif get_balance['balance'] < self.cost[banner_num]:
             return await ctx.send("У вас недостатньо коштів")
         elif getter.id == ctx.author.id:
             return await ctx.send("Ви не можете подарувати подарунок собі")
