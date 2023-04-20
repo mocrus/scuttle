@@ -22,23 +22,27 @@ class Paginator(disnake.ui.View):
         self.curent_costs = 0
         self.current_embed = 0
     
-
+    #creat button back
     @disnake.ui.button(label="⬅️", style=disnake.ButtonStyle.primary)
     async def under(self, button: disnake.ui.Button, ctx: disnake.Interaction):
+        #check who use the button
         if ctx.author.id != self.author:
             return await ctx.send("Не лізь сожрьот 🐻", ephemeral=True)
+        #previos embed
         if self.current_embed:
             self.current_embed, self.curent_costs = self.current_embed - 1, self.curent_costs - 1
             await ctx.response.edit_message(embed=self.embeds[self.current_embed])
         else:
             return await ctx.send("Це перша сотрінка", ephemeral=True)
-        
+    #creat button buy
     @disnake.ui.button(label="Придбати", style=disnake.ButtonStyle.success)
     async def buy(self, button: disnake.ui.Button, ctx: disnake.Interaction):
         a = await collection.find_one({"id": ctx.author.id})
         role = disnake.utils.get(ctx.guild.roles, id=self.roles[self.curent_costs])
+        #check balance
         if a["balance"] < self.costs[self.curent_costs]:
             return await ctx.send("У вас недостатньо коштів", ephemeral=True)
+        #check who use the button
         elif ctx.author.id != self.author:
             return await ctx.send("Не лізь сожрьот 🐻", ephemeral=True)
         elif self.costs[self.curent_costs] == 0:
@@ -54,11 +58,14 @@ class Paginator(disnake.ui.View):
             return await ctx.send(f"Ви успішно купили банер", ephemeral=True)
 
            
+    #creat button next
 
     @disnake.ui.button(label="➡️", style=disnake.ButtonStyle.primary)
     async def upper(self, button: disnake.ui.Button, ctx: disnake.Interaction):
+        #check who use the button
         if ctx.author.id != self.author:
             return await ctx.send("Не лізь сожрьот 🐻", ephemeral=True)
+        #next embed
         elif self.current_embed < len(self.embeds)-1:
             self.current_embed, self.curent_costs = self.current_embed + 1, self.curent_costs + 1
             await ctx.response.edit_message(embed=self.embeds[self.current_embed])

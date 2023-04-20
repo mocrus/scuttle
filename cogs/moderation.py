@@ -11,6 +11,7 @@ class ModerationCommand(commands.Cog):
     @commands.slash_command(description="Вийди звідчи, РОЗБІЙНИК")
     @commands.has_any_role(1079801089962016849)
     async def kick_user(self, ctx, member: disnake.Member, *, reason=None):
+        #send message
         if reason is not None:
             embed = disnake.Embed(
             title="КІК",
@@ -36,6 +37,7 @@ class ModerationCommand(commands.Cog):
     @commands.slash_command(description="Вийди і не вертайся")
     @commands.has_any_role(1079801089962016849)
     async def ban_user(self, ctx, member: disnake.Member, *, reason=None):
+        #send message
         if reason is not None:
             embed = disnake.Embed(
             title="БАН",
@@ -61,8 +63,10 @@ class ModerationCommand(commands.Cog):
     @commands.slash_command(description="Подумай над сутністю життя")
     @commands.has_any_role(1079801089962016849)
     async def mute_user(self, ctx, member: disnake.Member, days=0, hours=0, minutes=0, reason=None):
-
+        # GET CHANNEL WHERE WILL SEND mute message
         channel = disnake.utils.get(ctx.guild.channels, id=1076737017448255519)
+        #send message
+
         time = (int(days)*3600)+(int(minutes))+(int(hours)*60)
 
         if reason is not None:
@@ -96,7 +100,9 @@ class ModerationCommand(commands.Cog):
     @commands.slash_command(description="Одумався?")
     @commands.has_any_role(1079801089962016849)
     async def unmute_user(self, ctx, member: disnake.Member, reason=None):
+        # GET CHANNEL WHERE WILL SEND unmute message
         channel = disnake.utils.get(ctx.guild.channels, id=1076737017448255519)
+        #send message
         if reason is not None:
             embed = disnake.Embed(
                 title="РОЗМУТ",

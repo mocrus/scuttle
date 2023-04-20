@@ -16,6 +16,7 @@ class Economyc(commands.Cog):
             1085709602043203594, 1085712151970328697, 1085713357253910599,
             1077218489523240993, 1085714937546014740, 1085718665741209650,
             1085719022391263313, 1085668121462984754]
+    #CHECKING FOR BANNER OFF EVERY HOUR
     @tasks.loop(hours=1)
     async def banner_off(self):
         banners = collection_shop.find({})
@@ -29,8 +30,8 @@ class Economyc(commands.Cog):
                 await memb.remove_roles(role)
                 await collection.update_one({"id": member}, {"$set": {"fon": None}})
 
-
-    @tasks.loop(seconds=1)
+    #CHECKING FOR voice add xp every minute
+    @tasks.loop(minutes=1)
     async def add_voice_act(self):
         guild = self.bot.get_guild(750380875706794116)
         async with self.lock:
@@ -59,9 +60,11 @@ class Economyc(commands.Cog):
                         role_add = disnake.utils.get(guild.roles, id=1090417882388758669)
                         await collection.update_one({"id": member}, {"$inc": {"balance": +2000}})
                         await user.add_roles(role_add)
-                        
+
+
+    #checking guild users in db
     @commands.command()
-    @commands.has_any_role(1081231864389447732)
+    @commands.has_any_role(1081231864389447732, 1071255622424731738)
     async def check_db(self, ctx):
         for member in ctx.guild.members:
             user = await collection.find_one({"id": member.id})
@@ -83,6 +86,17 @@ class Economyc(commands.Cog):
 
         await ctx.author.send(f"Перевірку завершено успішно")
 
+
+    @commands.slash_command()
+    async def voice_start(self, ctx):
+        if self.add_voice_act.is_running():
+            return await ctx.send("Войс начисляється")
+        self.add_voice_act.start()
+
+
+
+
+    #start tasks
     @commands.Cog.listener()
     async def on_ready(self):
         print("go")
@@ -90,7 +104,7 @@ class Economyc(commands.Cog):
         self.banner_off.start()
 
 
-
+    #adding member when he join
     @commands.Cog.listener()
     async def on_member_join(self, member):
         a, b = await collection.find_one({"id": member.id}), member.get_role(1060370273695699056)
@@ -109,7 +123,7 @@ class Economyc(commands.Cog):
                     'daily': 0
             })
     
-    
+    #giving valute
     @commands.slash_command(description="Чітерна штука адміна, яка зробить тебе богатим")
     @commands.has_any_role(1071255622424731738)
     async def give(self, ctx, member: disnake.Member, summary: int):
@@ -118,13 +132,13 @@ class Economyc(commands.Cog):
         else:
             await collection.update_one({"id": member.id}, {"$inc": {"balance": +summary}})
             await ctx.send(f"{ctx.author.name} gave {summary} coins to {member.name}")
-
+    #error if user is not admin
     @give.error
     async def give_eroor(self, ctx, error):
         if isinstance(error, disnake.ext.commands.errors.MissingRole):
             await ctx.send("Ви не адмін")
 
-
+    #daily bonus with colldown
     @commands.slash_command()
     @commands.cooldown(1, 43200, commands.BucketType.user)
     async def daily(self, ctx):
@@ -141,6 +155,7 @@ class Economyc(commands.Cog):
             await ctx.send(f"Ваш бонус {b}", delete_after=10)
 
 
+    #adding vlute for messagw if member has not bot role
     @commands.Cog.listener()
     async def on_message(self, message : disnake.Message):
         if self.bot.user.mentioned_in(message):
@@ -181,7 +196,7 @@ class Economyc(commands.Cog):
 
 
 
-
+    #when user join voice add it to list and adding value
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         async with self.lock:
@@ -192,7 +207,7 @@ class Economyc(commands.Cog):
         
             self.members_to_be_charged.add(member.id)
         
-            
+    #if daily bonus cool down is not complite
     @daily.error
     async def everyday_bonus_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):

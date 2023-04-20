@@ -12,8 +12,10 @@ class MarryAssept(disnake.ui.View):
         self.author = author
         self.member = member
 
+    #create button
     @disnake.ui.button(label="Погодитись", style=disnake.ButtonStyle.success)
     async def agree(self, button: disnake.ui.Button, ctx: disnake.Interaction):
+        #check who use
         if ctx.author.id != self.member.id:
             return await ctx.send("Не лізь своїм носом в чужі стосунки", ephemeral=True)
         role = disnake.utils.get(ctx.guild.roles, id=1077027040181633076)
@@ -51,8 +53,10 @@ class MarryAssept(disnake.ui.View):
         await self.author.add_roles(role)
         await ctx.send(embed=embed, delete_after=60)
 
+    #create button
     @disnake.ui.button(label="Відмовити", style=disnake.ButtonStyle.red)
     async def reject(self, button: disnake.ui.Button, ctx: disnake.Interaction):
+        #check who use
         if ctx.author.id != self.member.id:
             return await ctx.send("Не лізь своїм носом в чужі стосунки", ephemeral=True)
         emed = disnake.Embed(
@@ -72,7 +76,9 @@ class MarryCog(commands.Cog):
 
     @commands.slash_command()
     async def marry(self, ctx, member: disnake.Member = None):
+        #get user balance
         get_balnce = await collection.find_one({"id": ctx.author.id})
+        #check member needs
         if member is None:
             return await ctx.send("Ви не вказали кому хочете зробити пропозицію")
         elif member.id == ctx.author.id:

@@ -7,8 +7,10 @@ class ChildrenRemove(disnake.ui.View):
         super().__init__()
         self.child = child
         self.parents = parents
+    #create button
     @disnake.ui.button(label="Погодитись", style=disnake.ButtonStyle.success)
     async def agree(self, button: disnake.ui.Button, ctx: disnake.Interaction):
+        #check who use
         if ctx.author.id != self.child.id:
             return await ctx.send("Не лізь своїм носом в чужі стосунки", ephemeral=True)
         emed = disnake.Embed(
@@ -22,8 +24,10 @@ class ChildrenRemove(disnake.ui.View):
         await ctx.send(f"{self.parents[0].mention} та {self.parents[1].mention} дитина була здана в дитбудинок")
         await ctx.send(embed=emed, delete_after=60)
 
+    #create button
     @disnake.ui.button(label="Відмовити", style=disnake.ButtonStyle.red)
     async def reject(self, button: disnake.ui.Button, ctx: disnake.Interaction):
+        #check who use
         if ctx.author.id != self.child.id:
             return await ctx.send("Не лізь своїм носом в чужі стосунки", ephemeral=True)
         emed = disnake.Embed(
@@ -39,7 +43,9 @@ class ChildrenRemoveCog(commands.Cog):
     
     @commands.slash_command()
     async def children_remove(self, ctx, child: disnake.Member=None):
+        #get marry info
         marry = await collection_marrys.find_one({"$or": [{"id1": ctx.author.id}, {"id2": ctx.author.id}]})
+        #check member needs
         if child is None:
             return await ctx.send("Ви не вказали дитини")
         elif child.id == marry['id1'] or child.id == marry["id2"]:
